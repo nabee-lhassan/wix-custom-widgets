@@ -1,0 +1,164 @@
+<!-- HTML Element inside Wix page -->
+<script src="https://js.stripe.com/v3/"></script>
+<div class="div-card-container">
+
+    <div class="P-card P-info" id="lightbox-user-name"></div>
+    <div class="P-card P-info" id="lightbox-package-name"></div>
+    <div class="P-card P-info" id="lightbox-package-price"></div>
+    <div class="P-card P-info" id="lightbox-package-credits"></div>
+</div>
+<div class="P-card" id="card-element"></div>
+<button id="submit">Pay</button>
+<div id="error-message"></div>
+
+<style>
+    /* Card Element box styling */
+    .P-card {
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        padding: 12px 15px;
+        margin-bottom: 16px;
+        background-color: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        transition: border-color 0.3s ease;
+        width: 93%;
+
+    }
+
+    .div-card-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 5px;
+
+    }
+
+    .P-info {
+        width: 43%;
+    }
+
+    #card-element.StripeElement--focus {
+        border-color: #635bff;
+    }
+
+    /* Pay button styling */
+    #submit {
+        background-color: #635bff;
+        color: #fff;
+        padding: 12px 20px;
+        font-size: 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: background-color 0.3s ease;
+        display: inline-block;
+    }
+
+    #submit:hover {
+        background-color: #4a44e1;
+    }
+
+    #submit:disabled {
+        background-color: #bbb;
+        cursor: not-allowed;
+    }
+
+    /* Error message styling */
+    #error-message {
+        color: #ff4d4d;
+        font-size: 14px;
+        margin-top: 10px;
+        min-height: 18px;
+    }
+</style>
+
+
+
+
+<script>
+
+
+    window.addEventListener("message", function (event) {
+        const trustedOrigin = "https://www.openvolumestudio.com"; // ⚠️ Yahan apne Wix ka actual domain daalo
+
+        // Check if message is coming from the trusted origin
+        if (event.origin !== trustedOrigin) {
+            console.warn("Untrusted origin:", event.origin);
+            return;
+        }
+
+        const data = event.data;
+        console.log("Data received from parent:", data);
+
+        //  Check if package name exists
+        if (data.pakageName) {
+            document.getElementById("lightbox-user-name").innerText = data.savedUserName;
+            document.getElementById("lightbox-package-name").innerText = data.pakageName;
+            document.getElementById("lightbox-package-price").innerText = data.pakagePrice;
+            document.getElementById("lightbox-package-credits").innerText = data.pakageCredits;
+
+            const stripe = Stripe('pk_test_51P2ZKBP2rKrOH9q6wUNCsMJkJMeGXNIrHf9HJrlgPEEMbGrDrsz7SNn5lwryqZIsWnUHxTPQR5M7Hv6r2hkZQ8gc00ja44v10c');
+            const elements = stripe.elements();
+            const card = elements.create('card');
+            card.mount('#card-element');
+
+            document.getElementById('submit').addEventListener('click', async () => {
+                const { token, error } = await stripe.createToken(card, { name: data.savedUserName });
+
+
+
+
+
+
+                if (error) {
+                    document.getElementById('error-message').innerText = error.message;
+                    parent.postMessage(error.message, "*");
+                } else {
+                    // Send token to Wix Page code using postMessage
+                    // parent.postMessage({ token: token.id }, "*");
+
+                    // console.log({ token: token.id })
+
+                    // Data to send
+                    const data = {
+                        package_name: data.pakageName,
+                        amount: data.pakagePrice,
+                        credits: data.pakageCredits,
+                        stripeToken: "tok_1R5VS4P2rKrOH9q6u9yBc7Mg"
+                    };
+
+                    // Send data via POST request
+                    fetch('https://forestgreen-rail-905681.hostingersite.com/api/purchase-credits', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json', // Make sure to send data as JSON
+                        },
+                        body: JSON.stringify(data) // Convert the data object into a JSON string
+                    })
+                        .then(response => response.json()) // Parse the JSON response
+                        .then(data => {
+                            console.log('Success:', data); // Handle the success response
+                        })
+                        .catch(error => {
+                            console.error('Error:', error); // Handle errors
+                        });
+
+
+                   
+
+
+                }
+            });
+
+
+
+
+
+        } else {
+            console.warn("Package name not found in received data");
+        }
+    });
+
+
+
+</script>
