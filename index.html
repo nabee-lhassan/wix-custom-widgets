@@ -2,16 +2,40 @@
 <script src="https://js.stripe.com/v3/"></script>
 <div class="div-card-container">
 
-    <div class="P-card P-info" id="lightbox-user-name"></div>
-    <div class="P-card P-info" id="lightbox-package-name"></div>
-    <div class="P-card P-info" id="lightbox-package-price"></div>
-    <div class="P-card P-info" id="lightbox-package-credits"></div>
+    <div class="P-card-label P-info">User Name
+
+        <div class="P-card " id="lightbox-user-name"></div>
+    </div>
+    <div class="P-card-label P-info">Package
+
+        <div class="P-card " id="lightbox-package-name"></div>
+    </div>
+    <div class="P-card-label P-info">Price
+
+        <div class="P-card " id="lightbox-package-price"></div>
+    </div>
+    <div class="P-card-label P-info">Credits
+
+        <div class="P-card " id="lightbox-package-credits"></div>
+    </div>
 </div>
-<div class="P-card" id="card-element"></div>
-<button id="submit">Pay</button>
-<div id="error-message"></div>
+<div class="P-card-label ">Card Details
+
+    <div class="P-card" id="card-element"></div>
+    <button id="submit">Pay</button>
+    <div id="error-message"></div>
+</div>
+
+<div class="payment-status d-none">
+
+</div>
+
 
 <style>
+
+    .P-card-label{
+        font-weight: 600;
+    }
     /* Card Element box styling */
     .P-card {
         border: 1px solid #ccc;
@@ -21,7 +45,7 @@
         background-color: #fff;
         box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         transition: border-color 0.3s ease;
-        width: 93%;
+        
 
     }
 
@@ -33,7 +57,7 @@
     }
 
     .P-info {
-        width: 43%;
+        width: 49%;
     }
 
     #card-element.StripeElement--focus {
@@ -70,12 +94,45 @@
         margin-top: 10px;
         min-height: 18px;
     }
+
+    .payment-status {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background-color: rgba(0, 0, 0, 0.7);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 9999;
+        color: #fff;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        border-radius: 5px;
+
+    }
+
+ 
+
+    .d-none {
+        display: none;
+
+    }
+
+    .d-flex {
+        display: flex;
+
+    }
 </style>
 
 
 
 
 <script>
+
 
 
     window.addEventListener("message", function (event) {
@@ -87,78 +144,82 @@
             return;
         }
 
-        const data = event.data;
-        console.log("Data received from parent:", data);
+
+
+        const dataFromParent = event.data;  // Renaming the variable here to avoid conflict
+        console.log("Data received from parent:", dataFromParent);
 
         //  Check if package name exists
-        if (data.pakageName) {
-            document.getElementById("lightbox-user-name").innerText = data.savedUserName;
-            document.getElementById("lightbox-package-name").innerText = data.pakageName;
-            document.getElementById("lightbox-package-price").innerText = data.pakagePrice;
-            document.getElementById("lightbox-package-credits").innerText = data.pakageCredits;
+        if (dataFromParent.pakageName) {
+            document.getElementById("lightbox-user-name").innerText = dataFromParent.savedUserName;
+            document.getElementById("lightbox-package-name").innerText = dataFromParent.pakageName;
+            document.getElementById("lightbox-package-price").innerText = "$" + dataFromParent.pakagePrice;
+            document.getElementById("lightbox-package-credits").innerText =  dataFromParent.pakageCredits;
 
             const stripe = Stripe('pk_test_51P2ZKBP2rKrOH9q6wUNCsMJkJMeGXNIrHf9HJrlgPEEMbGrDrsz7SNn5lwryqZIsWnUHxTPQR5M7Hv6r2hkZQ8gc00ja44v10c');
             const elements = stripe.elements();
             const card = elements.create('card');
             card.mount('#card-element');
 
+            // Dome element 
+
+
+
+            const paymentStatus = document.querySelector('.payment-status');
+
             document.getElementById('submit').addEventListener('click', async () => {
-                const { token, error } = await stripe.createToken(card, { name: data.savedUserName });
-
-
-
-
-
+                const { token, error } = await stripe.createToken(card, { name: dataFromParent.savedUserName });
 
                 if (error) {
                     document.getElementById('error-message').innerText = error.message;
                     parent.postMessage(error.message, "*");
                 } else {
-                    // Send token to Wix Page code using postMessage
-                    // parent.postMessage({ token: token.id }, "*");
-
-                    // console.log({ token: token.id })
-
-                    // Data to send
-                    const data = {
-                        package_name: data.pakageName,
-                        amount: data.pakagePrice,
-                        credits: data.pakageCredits,
-                        stripeToken: "tok_1R5VS4P2rKrOH9q6u9yBc7Mg"
+                    // Send data to the server
+                    const purchaseData = {
+                        package_name: dataFromParent.pakageName,
+                        amount: Number(dataFromParent.pakagePrice),
+                        credits: dataFromParent.pakageCredits,
+                        stripeToken: token.id  // Send the correct token
                     };
 
-                    // Send data via POST request
+                    console.log("purchaseData:", purchaseData);
+
+
                     fetch('https://forestgreen-rail-905681.hostingersite.com/api/purchase-credits', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json', // Make sure to send data as JSON
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${dataFromParent.userToken}`
                         },
-                        body: JSON.stringify(data) // Convert the data object into a JSON string
+                        body: JSON.stringify(purchaseData)
                     })
-                        .then(response => response.json()) // Parse the JSON response
-                        .then(data => {
-                            console.log('Success:', data); // Handle the success response
+                        .then(response => response.json())
+                        .then(responseData => {
+                            console.log('Success:', responseData);
+                            parent.postMessage(responseData, "*");
+
+                            paymentStatus.classList.remove('d-none');
+                            paymentStatus.style.backgroundColor = '#43A047';
+                            paymentStatus.classList.add('d-flex');
+                            paymentStatus.innerHTML = `
+                    <p style="color:white;">${responseData.message}</p>  `;
                         })
                         .catch(error => {
-                            console.error('Error:', error); // Handle errors
+                            console.error('Error:', error);
+                            parent.postMessage(responseData, "*");
+                            paymentStatus.classList.remove('d-none');
+                            paymentStatus.style.backgroundColor = '#fff5f0';
+                            paymentStatus.classList.add('d-flex');
+                            paymentStatus.innerHTML = `
+                    <p style="color:#dd3c08;">${responseData.message}</p>`;
                         });
-
-
-                   
 
 
                 }
             });
-
-
-
-
-
         } else {
             console.warn("Package name not found in received data");
         }
     });
-
-
 
 </script>
