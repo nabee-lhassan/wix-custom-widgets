@@ -30,6 +30,10 @@
 
 </div>
 
+<div class="pay-loader d-none">
+  <img src="https://static.wixstatic.com/media/d63a30_c22ded3fd21a4328960dc4341a6cdb61~mv2.gif" alt="">
+</div>
+
 
 <style>
 
@@ -115,6 +119,30 @@
 
     }
 
+    .pay-loader{
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        top: 0;
+        left: 0;
+        background-color: rgba(255, 255, 255, 0.642);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        z-index: 9999;
+        color: #fff;
+        font-size: 24px;
+        font-weight: bold;
+        text-align: center;
+        border-radius: 5px;
+    }
+
+    .pay-loader img{
+        width: 100px;
+
+    }
+
  
 
     .d-none {
@@ -172,7 +200,7 @@
 
                 if (error) {
                     document.getElementById('error-message').innerText = error.message;
-                    parent.postMessage(error.message, "*");
+                    // parent.postMessage(error.message, "https://www.openvolumestudio.com");
                 } else {
                     // Send data to the server
                     const purchaseData = {
@@ -183,6 +211,8 @@
                     };
 
                     console.log("purchaseData:", purchaseData);
+
+                    document.querySelector('.pay-loader').classList.remove('d-none');
 
 
                     fetch('https://forestgreen-rail-905681.hostingersite.com/api/purchase-credits', {
@@ -195,16 +225,27 @@
                     })
                         .then(response => response.json())
                         .then(responseData => {
+                          document.querySelector('.pay-loader').classList.add('d-none');
                             console.log('Success:', responseData);
-                            parent.postMessage(responseData, "*");
+                            parent.postMessage(responseData, "https://www.openvolumestudio.com");
+                            
+
+                            if(responseData.success === true){
+                              paymentStatus.style.backgroundColor = '#43A047';
+                              window.postMessage(responseData, 'https://www.openvolumestudio.com');
+
+                            }else if (responseData.success === false){
+                              paymentStatus.style.backgroundColor = '#ed4918';
+                            }
 
                             paymentStatus.classList.remove('d-none');
-                            paymentStatus.style.backgroundColor = '#43A047';
+                            
                             paymentStatus.classList.add('d-flex');
                             paymentStatus.innerHTML = `
                     <p style="color:white;">${responseData.message}</p>  `;
                         })
                         .catch(error => {
+                          document.querySelector('.pay-loader').classList.add('d-none');
                             console.error('Error:', error);
                             parent.postMessage(responseData, "*");
                             paymentStatus.classList.remove('d-none');
