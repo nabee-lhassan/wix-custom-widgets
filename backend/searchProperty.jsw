@@ -1,0 +1,35 @@
+import { fetch } from 'wix-fetch';
+
+export function searchProperty(property, token) {
+
+console.log(token)
+    return fetch('https://forestgreen-rail-905681.hostingersite.com/api/search-property', {
+
+
+ method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization':  `Bearer ${token}`
+        },
+        body: JSON.stringify(property)
+    })
+        .then(response => response.json())
+        .then(data => {
+            console.log(data)
+            if (data) {
+                console.log('token', token)
+                return { 
+                    success: true, 
+                    search_details: data.search_details,
+                    credits_deducted: data.credits_deducted,
+                    street_data: data.street_data,
+                    message: data.message };
+            } else {
+                return { success: false, message: data.error?.message || "Something went wrong" };
+            }
+        })
+        .catch(error => {
+            console.log("Backend error:", error);
+            return { success: false, message: error.message };
+        });
+}

@@ -1,0 +1,13 @@
+import { fetch } from 'wix-fetch';
+
+export function getPackages() {
+    return fetch("https://forestgreen-rail-905681.hostingersite.com/api/packages", { method: "GET" })
+        .then(response => response.json()) 
+        .then(data => {
+            return data; // API ka response return karo
+        })
+        .catch(error => {
+            console.log("Error Fetching Data:", error);
+            throw new Error("Failed to fetch data"); // Error handle karo
+        });
+}

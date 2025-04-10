@@ -1,0 +1,82 @@
+import { fetch } from 'wix-fetch';
+
+export function registerUser(userDetails) {
+    const url = "https://forestgreen-rail-905681.hostingersite.com/api/register"; 
+    const options = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(userDetails)
+    };
+
+    return fetch(url, options)
+        .then(response => response.json())
+        .then(data => {
+            if (data) { 
+                return { success: true, message: data.message }; 
+            } else {
+                return { success: false, error: data.error || "Unknown error occurred" };
+            }
+        })
+        .catch(err => {
+            return { success: false, error: err.message };
+        });
+}
+
+
+
+export function allUsers() {
+    return fetch('https://forestgreen-rail-905681.hostingersite.com/api/users', { method: 'get' })
+        .then(response => {
+            if (response.ok) {
+                return response.json();
+            }
+            throw new Error('Network response was not ok');
+        });
+}
+
+
+
+
+
+
+// login Function
+export function loginUser(credentials) {
+    const url = "https://forestgreen-rail-905681.hostingersite.com/api/login"; 
+    const options = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(credentials)
+    };
+
+    return fetch(url, options)
+        .then(response => response.json())
+        .then(data => {
+            if (data.token) { 
+                return { 
+    success: true, 
+    token: data.token, 
+    firstName: data.user.first_name, 
+    lastName: data.user.last_name, 
+    email: data.user.email,
+    account_type: data.user.account_type, 
+    credits: data.user.credits, 
+    verified_account: data.user.verified_account, 
+    creadits: data.user.creadits, 
+    subscribe_for_news: data.user.subscribe_for_news, 
+    created_at: data.user.created_at,
+    // purchased_credits: data.user.purchased_credits, 
+    message: "Login Successful!" 
+}
+            }else{
+                return { success: false, error: data.error || "Invalid credentials" };
+            }
+        })
+        .catch(err => {
+            return { success: false, error: err.message };
+        });
+}
+
+
+

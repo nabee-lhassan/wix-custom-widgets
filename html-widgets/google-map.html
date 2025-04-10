@@ -1,0 +1,40 @@
+<!-- Google Map Display Area -->
+<div id="map" style="height: 400px; width: 100%;"></div>
+
+<!-- Google Maps Script with your API Key -->
+<script async
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+</script>
+
+<script> 
+
+  function initMap() {
+    const geocoder = new google.maps.Geocoder();
+
+    // Sample address, replace with dynamic address from your API
+    const address = "Agent Software Ltd, North Square 11-13 Spear Street, MANCHESTER"; // This will be replaced by your API response
+
+    geocoder.geocode({ 'address': address }, (results, status) => {
+        if (status === 'OK') {
+            // Fetch the latitude and longitude from the geocode result
+            const location = results[0].geometry.location;
+
+            // Create a map centered on that location
+            const map = new google.maps.Map(document.getElementById("map"), {
+                zoom: 15,
+                center: location,
+            });
+
+            // Add a marker at the location
+            const marker = new google.maps.Marker({
+                map: map,
+                position: location,
+            });
+        } else {
+            alert("Geocode failed due to: " + status);
+        }
+    });
+}
+
+
+</script>
